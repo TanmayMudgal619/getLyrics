@@ -3,11 +3,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/foundation/key.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:getlyrics/bloc/home_bloc.dart';
 import 'package:getlyrics/bloc/internet_bloc.dart';
 import 'package:getlyrics/model/track_model.dart';
+import 'package:getlyrics/storage.dart';
+import 'package:getlyrics/ui/bookmarks.dart';
 import 'package:getlyrics/ui/track.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -33,6 +37,19 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         centerTitle: true,
         title: const Text("getLyrics"),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                  context,
+                  CupertinoPageRoute(
+                      builder: (context) => BookMarks(
+                            internetBloc: _internetBloc,
+                          )));
+            },
+            icon: const Icon(Icons.bookmarks),
+          ),
+        ],
       ),
       body: MultiBlocProvider(
         providers: [
@@ -59,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Icons.signal_cellular_connected_no_internet_0_bar_rounded,
                       size: 70,
                     ),
-                    Text("No Internet"),
+                    Text("No Internet Connection"),
                   ],
                 ),
               );
@@ -134,8 +151,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               trailing: IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.bookmark),
+                onPressed: () {
+                  if (storage.ids.contains(e.trackId.toString()) == false) {
+                    storage.addTrack(e.trackId.toString(), e.trackName);
+                  } else {
+                    storage.removeTrack(e.trackId.toString(), e.trackName);
+                  }
+                  setState(() {});
+                },
+                icon: Icon(
+                  Icons.bookmark,
+                  color: (storage.ids.contains(e.trackId.toString()))
+                      ? (Colors.blueAccent)
+                      : (null),
+                ),
               ),
             ),
           )

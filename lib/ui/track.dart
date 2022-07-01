@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:getlyrics/api/get_lyrics.dart';
 import 'package:getlyrics/bloc/internet_bloc.dart';
+import 'package:getlyrics/bloc/lyrics_bloc.dart';
 import 'package:getlyrics/model/track_model.dart';
+import 'package:getlyrics/storage.dart';
 
 class TrackDetail extends StatefulWidget {
   final Track track;
@@ -15,8 +17,11 @@ class TrackDetail extends StatefulWidget {
 }
 
 class _TrackDetailState extends State<TrackDetail> {
+  late LyricsBloc _lyricsBloc;
   @override
   void initState() {
+    _lyricsBloc = LyricsBloc(widget.track.trackId);
+    _lyricsBloc.add(GetLyrics());
     super.initState();
   }
 
@@ -26,9 +31,35 @@ class _TrackDetailState extends State<TrackDetail> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(widget.track.trackName),
+        actions: [
+          IconButton(
+            onPressed: () {
+              if (storage.ids.contains(widget.track.trackId.toString()) ==
+                  false) {
+                storage.addTrack(
+                    widget.track.trackId.toString(), widget.track.trackName);
+              } else {
+                storage.removeTrack(
+                    widget.track.trackId.toString(), widget.track.trackName);
+              }
+              setState(() {});
+            },
+            icon: Icon(
+              Icons.bookmark,
+              color: (storage.ids.contains(widget.track.trackId.toString()))
+                  ? (Colors.black)
+                  : (null),
+            ),
+          )
+        ],
       ),
-      body: BlocProvider(
-        create: (_) => widget.internetBloc,
+      body: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (_) => widget.internetBloc,
+          ),
+          BlocProvider(create: (_) => _lyricsBloc)
+        ],
         child: BlocBuilder(
           bloc: widget.internetBloc,
           builder: (context, state) {
@@ -43,7 +74,7 @@ class _TrackDetailState extends State<TrackDetail> {
                     Icons.signal_cellular_connected_no_internet_0_bar_rounded,
                     size: 70,
                   ),
-                  Text("No Internet"),
+                  Text("No Internet Connection"),
                 ],
               ),
             );
@@ -82,26 +113,23 @@ class _TrackDetailState extends State<TrackDetail> {
           Expanded(
               child: Center(
             child: (widget.track.hasLyrics == 1)
-                ? (FutureBuilder<String>(
-                    future: getLyricsApi(widget.track.trackId),
-                    builder: (context, snapshot) {
-                      switch (snapshot.connectionState) {
-                        case ConnectionState.active:
-                        case ConnectionState.none:
-                        case ConnectionState.waiting:
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        default:
-                          if (snapshot.hasError) {
-                            return Center(
-                              child: Text(snapshot.error.toString()),
-                            );
-                          }
-                          return SingleChildScrollView(
-                            child: Text(snapshot.requireData),
-                          );
+                ? (BlocBuilder(
+                    bloc: _lyricsBloc,
+                    builder: (context, state) {
+                      if (state is LyricsInitial) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      } else if (state is LyricsLoaded) {
+                        return Text(state.lyrics);
+                      } else if (state is LyricsError) {
+                        return Center(
+                          child: Text(state.errorCode),
+                        );
                       }
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
                     },
                   ))
                 : (const Text("No Lyrics......")),
