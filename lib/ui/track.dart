@@ -31,27 +31,6 @@ class _TrackDetailState extends State<TrackDetail> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(widget.track.trackName),
-        actions: [
-          IconButton(
-            onPressed: () {
-              if (storage.ids.contains(widget.track.trackId.toString()) ==
-                  false) {
-                storage.addTrack(
-                    widget.track.trackId.toString(), widget.track.trackName);
-              } else {
-                storage.removeTrack(
-                    widget.track.trackId.toString(), widget.track.trackName);
-              }
-              setState(() {});
-            },
-            icon: Icon(
-              Icons.bookmark,
-              color: (storage.ids.contains(widget.track.trackId.toString()))
-                  ? (Colors.black)
-                  : (null),
-            ),
-          )
-        ],
       ),
       body: MultiBlocProvider(
         providers: [
