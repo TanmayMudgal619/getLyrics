@@ -3,15 +3,15 @@
 A Flutter Application to Get Lyrics of various Songs using Musixmatch API.
 
 Add following Dependecies on pubsec.yaml file:
-*flutter_bloc
+* flutter_bloc
 
-*equatable
+* equatable
 
-*http
+* http
 
-*connectivity_plus
+* connectivity_plus
 
-*shared_preferences
+* shared_preferences
 
 
 Or Just Clone the Repo and run flutter pub get.
